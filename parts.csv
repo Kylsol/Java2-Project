@@ -1,0 +1,62 @@
+sku,description,price,stock
+APP-101-V02,VIM-303 OS Image,0,0
+CBL-117-V01,Cable - Stereo Camera,4,0
+CBL-118-V01,Cable - Inspection Camera,4,0
+CBL-119-V01,Cable - Illumination,4,0
+CBL-120-V01,Cable - Camera Sync,2,0
+CMP-10062-V01 (sleeve-and-nut),Bulkhead sleeve and nut,6,0
+CMP-10062-V01 (o-ring),O-Ring for M12 sleeve,0,0
+CMP-10063-V01,M12 Connector,30,0
+FAB-179-V01,Window with Adhesive,26,0
+FAB-180-V01,Engine Mount,140,0
+FAB-181-V01,Case Finished,260,0
+FAB-182-V01,Backplate,150,0
+FAB-184-V01,Baffle,9,0
+FAB-185-V01,Diffuser,12,0
+FAB-186-V01,Lightpipe Shroud,2,0
+FAB-187-V01,Diffuser Spacer,5,0
+FAB-189-V01,Stereo Camera Focus Collar,0,0
+MCH-1056-V01,M2x5 Button  ,0.5,0
+MCH-1057-V01,Screw M2x10,0.5,0
+MCH-1058-V01,Screw M2x4,0.5,0
+MCH-1060-V01,M2x5 Button Threadforming,0.5,0
+MCH-1061-V01,Screw M3x8 Button,0.5,0
+MCH-1062-V01,M5 threadcert,0.5,0
+MCH-1063-V01,1/4-20 threadcert,0.5,0
+MCH-1064-V01 (pipe),Lightpipe pipe,5,0
+MCH-1064-V01 (seal),Lightpipe seal,0,0
+MCH-1064-V01 (washer),Lightpipe washer,0,0
+MCH-1065-V01,Lightpipe nut,0.5,0
+MCH-1066-V01,O-Ring for Backplate,0.5,0
+MCH-1067-V01,Stereo Camera Focus O-Ring,0.21,0
+MCH-1088-V01,M3x5 Friction,0.5,0
+MTL-113-V01,Thermal Pad 10x10x1mm,0.25,0
+PCA-110-V01 Raw,Interface Board Raw,296,0
+PCA-110-V01 Serialized,Interface Board Serialized,0,0
+PCA-111-V01 Laser Set,Illumination Board Laser Power Set,0,0
+PCA-111-V01 Raw,Illumination Board Raw,236,0
+PCA-111-V01 Serialized,Illumination Board Serialized,0,0
+RSI-115-V01 Raw,DepthAI Board Raw,100,0
+RSI-115-V01 Serialized,DepthAI Board Serialized,0,0
+RSI-116-V01 Raw,Pi CM4001000 Raw,100,0
+RSI-116-V01 Serialized,Pi CM4001000 Serialized,0,0
+RSI-117-V01 Raw,Inspection Camera Raw,100,0
+RSI-117-V01 Serialized,Inspection Camera Serialized,0,0
+RSI-117-V01 Tested,Inspection Camera Tested,0,0
+RSI-118-V01 Raw,Stereo Camera Raw,50,0
+RSI-118-V01 Serialized,Stereo Camera Serialized,0,0
+RSI-119-V01,MicroSD Card Raw,15,0
+RSI-120-V01,MicroSD Card Programmed,0,0
+SUB-105-V01 Tested,Interface Board Tested,0,0
+SUB-105-V01 Untested,Interface Board Untested,0,0
+SUB-106-V01,Stereo Camera with Sync Cable,0,0
+SUB-107-V01,Illumination Assembly,0,0
+SUB-108-V01,Engine Assembly,0,0
+SUB-109-V01,Case Assembly,0,0
+SUB-110-V01,Front Assembly,0,0
+SUB-111-V01,Interface Assembly,0,0
+SUB-112-V01,Backplate Assembly,0,0
+SUB-113-V01,Rear Assembly,0,0
+SUB-114-V01,VIM-303 Camera,0,0
+SUB-117-V01,Backplate with Helicoils,0,0
+SUB-118-V01,Imaging Assembly,0,0
