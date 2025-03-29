@@ -1,0 +1,63 @@
+ID  PART                                QTY SER DESCRIPTION
+01  SUB-114-V01                          1   S  VIM-303 Camera
+02    MCH-1061-V01                       4      Screw M3x8 Button
+03    SUB-113-V01                        1   S  Rear Assembly
+04      SUB-112-V01                      1      Backplate Assembly
+05        SUB-117-V01                    1      Backplate with Helicoils
+06          FAB-182-V01                  1      Backplate
+07          MCH-1062-V01                 3      M5 threadsert
+08          MCH-1063-V01                 1      1/4-20 threadsert
+09        MCH-1064-V01 (pipe)            2      Lightpipe pipe
+10        MCH-1064-V01 (washer)          2      Lightpipe washer
+11        MCH-1064-V01 (seal)            2      Lightpipe seal
+12        MCH-1065-V01                   2      Lightpipe nut
+13        CMP-10062-V01                  1      Bulkhead sleeve and nut
+14      SUB-111-V01                      1   S  Interface Assembly
+15        MCH-1058-V01                   8      Screw M2x4
+16        SUB-105-V01, Tested            1   S  Interface Board, tested
+17          SUB-105-V01, Untested        1   S  Interface Board, untested
+18            PCA-110-V01, Serialized    1   S  Interface Board, serialized
+19               PCA-110-V01, Raw        1      Interface Board, raw
+20            CMP-10063-V01              1      M12 connector
+21        RSI-115-V01, Serialized        1   S  DepthAI Board, serialized
+22          RSI-115-V01, Raw             1      DepthAI Board, raw
+23        RSI-116-V01, Serialized        1   S  Pi CM4 CM4001000, serialized
+24          RSI-116-V01, Raw             1      Pi CM4 CM4001000, raw    
+25        FAB-186-V01                    1      Lightpipe shroud
+26      MTL-113-V01                      2      Thermal pad 10x10x1mm
+27      MCH-1066-V01                     1      O-Ring for back plate
+28      CMP-10062-V01                    1      O-Ring for M12 sleeve
+29      MCH-1057-V01                     6      Screw M2x10
+30      RSI-120-V01                      1      MicroSD card, programmed
+31        RSI-119-V01                    1      MicroSD card, raw
+32        APP-101-V02                    1      VIM-303 OS image
+33    SUB-110-V01                        1   S  Front Assembly
+34      MCH-1088-V01                     4      M3x5, friction
+35      SUB-108-V01                      1   S  Engine Assembly
+36        MCH-1088-V01                   4      M3x5, friction
+37        FAB-180-V01                    1      Engine Mount
+38        SUB-118-V01                    1   S  Imaging Assembly
+39          SUB-107-V01                  1   S  Illumination Assembly
+40            FAB-184-V01                1      Baffle
+41            FAB-185-V01                1      Diffuser
+42            FAB-187-V01                1      Diffuser Spacer
+43            PCA-111-V01, Laser Set     1   S  Illumination Board laser power set
+44              PCA-111-V01, Serialized  1   S  Illumination Board, serialized
+45                PCA-111-V01, Raw       1      Illumination Board, raw
+46            MCH-1060-V01               2      M2x5 Button Threadforming
+47          SUB-106-V01                  2   S  Stereo Camera with Sync Cable
+48            RSI-118-V01, Serialized    1   S  Stereo Camera, serialized
+49              RSI-118-V01, Raw         1      Stereo Camera, raw
+50            CBL-120-V01                1      Cable, Camera Sync
+51            FAB-189-V01                1      Stereo Camera Focus Collar
+52            MCH-1067-V01               1      Stereo Camera Focus O-Ring
+53          RSI-117-V01, Tested          1   S  Inspection Camera, tested
+54            RSI-117-V01, Serialized    1   S  Inspection Camera, serialized
+55              RSI-117-V01, Raw         1      Inspection Camera, raw
+56          CBL-119-V01                  1      Cable, Illumination
+57          CBL-118-V01                  1      Cable, Inspection Camera
+58          CBL-117-V01                  2      Cable, Stereo Camera
+59          MCH-1056-V01                12      M2x5 Button
+60      SUB-109-V01                      1      Case Assembly
+61        FAB-181-V01                    1      Case, Finished
+62        FAB-179-V01                    1      Window with Adhesive
