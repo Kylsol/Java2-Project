@@ -24,11 +24,11 @@ public class MRPSystemUI extends JFrame {
      */
     public MRPSystemUI() {
         // Set window properties
-        setTitle("MRP System");               // Window title
-        setSize(1280, 720);                   // Window dimensions
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Exit app on close
-        setLocationRelativeTo(null);          // Center window on screen
-        setLayout(new BorderLayout());        // Use BorderLayout for frame
+        setTitle("MRP System");                         // Window title
+        setSize(1280, 720);                      // Window dimensions
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);       // Exit app on close
+        setLocationRelativeTo(null);                        // Center window on screen
+        setLayout(new BorderLayout());                        // Use BorderLayout for frame
 
         // Create main panel with black background and absolute positioning
         JPanel mainPanel = new JPanel();
@@ -60,8 +60,8 @@ public class MRPSystemUI extends JFrame {
 
         // Create and style label for "MRP System" text
         JLabel titleLabel = new JLabel("MRP System");
-        titleLabel.setForeground(Color.WHITE);                       // Set text color to white
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));        // Set font style and size
+        titleLabel.setForeground(Color.WHITE);                                         // Set text color to white
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 20));                // Set font style and size
         titleLabel.setBounds(10, 70, 200, 30);                        // Position below the logo
         mainPanel.add(titleLabel);
 
@@ -78,37 +78,37 @@ public class MRPSystemUI extends JFrame {
 
         // Loop through button names and create styled buttons
         for (String text : buttons) {
-            JButton btn = new JButton(text);              // Create button with label
-            btn.setBackground(vrGreen);                   // Set button background color
-            btn.setForeground(Color.WHITE);               // Set button text color
-            btn.setOpaque(true);                          // Make sure background color is visible (important on macOS)
-            btn.setBorderPainted(false);                  // Remove 3D border look
-            btn.setFocusPainted(false);                   // Remove blue focus ring
-            btn.setFont(new Font("Arial", Font.BOLD, 14)); // Set button font style
+            JButton btn = new JButton(text);                              // Create button with label
+            btn.setBackground(vrGreen);                                   // Set button background color
+            btn.setForeground(Color.WHITE);                               // Set button text color
+            btn.setOpaque(true);                                 // Make sure background color is visible (important on macOS)
+            btn.setBorderPainted(false);                                // Remove 3D border look
+            btn.setFocusPainted(false);                                 // Remove blue focus ring
+            btn.setFont(new Font("Arial", Font.BOLD, 14));      // Set button font style
             btn.setBounds(10, yOffset, 160, 40);           // Set button position and size
-            btn.setActionCommand(text);                   // Set action command to identify button later
-            btn.addActionListener(e -> showCard(e.getActionCommand())); // Add event to show corresponding card
-            mainPanel.add(btn);                           // Add button to the panel
-            yOffset += 50;                                // Move Y position down for the next button
+            btn.setActionCommand(text);                                   // Set action command to identify button later
+            btn.addActionListener(e -> showCard(e.getActionCommand()));   // Add event to show corresponding card
+            mainPanel.add(btn);                                           // Add button to the panel
+            yOffset += 50;                                                // Move Y position down for the next button
         }
 
         // ---------- Create Dynamic Content Area ----------
 
         // Initialize CardLayout and apply it to a new panel
         cardLayout = new CardLayout();
-        cardPanel = new JPanel(cardLayout);               // Panel to hold swappable cards
-        cardPanel.setBackground(Color.WHITE);             // White background for card area
+        cardPanel = new JPanel(cardLayout);                                 // Panel to hold swappable cards
+        cardPanel.setBackground(Color.WHITE);                               // White background for card area
         cardPanel.setBounds(200, 10, 1060, 660);           // Position next to buttons
-        mainPanel.add(cardPanel);                         // Add card panel to main panel
+        mainPanel.add(cardPanel);                                           // Add card panel to main panel
 
         // Create one card for each button, add it to card panel
         for (String name : buttons) {
-            JPanel card = new JPanel();                   // Create a new card panel
-            card.setBackground(Color.WHITE);              // Set card background
-            JLabel label = new JLabel(name);              // Create label for the card
-            label.setFont(new Font("Arial", Font.BOLD, 24)); // Style the label
-            card.add(label);                              // Add label to card
-            cardPanel.add(card, name);                    // Add card to layout with a name
+            JPanel card = new JPanel();                                       // Create a new card panel
+            card.setBackground(Color.WHITE);                                  // Set card background
+            JLabel label = new JLabel(name);                                  // Create label for the card
+            label.setFont(new Font("Arial", Font.BOLD, 24));        // Style the label
+            card.add(label);                                                  // Add label to card
+            cardPanel.add(card, name);                                        // Add card to layout with a name
         }
     }
 
