@@ -1,2 +1,21 @@
-.vscode/
+# === Java build files ===
+*.class
+*.jar
+*.war
+*.ear
+
+# === Maven build directory ===
+target/
+
+# === Other output folders ===
 out/
+
+# === IDE settings ===
+.vscode/
+.idea/
+
+# === macOS system files ===
+.DS_Store
+
+# === Logs ===
+*.log
