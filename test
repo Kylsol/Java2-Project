@@ -1,0 +1,16 @@
+WITH RECURSIVE
+recursive_bom(sku, level, quantity, serialized) AS (
+    VALUES('SUB-114-V01', 0, NULL, NULL) -- You must specify all columns (quantity and serialized) in VALUES
+    UNION ALL
+    SELECT bom.sku, recursive_bom.level + 1, bom.quantity, bom.serialized
+    FROM bom
+    JOIN recursive_bom ON bom.parent_sku = recursive_bom.sku
+    ORDER BY recursive_bom.level + 1 DESC
+)
+SELECT
+    level,
+    printf('%.*c', level * 3, '-') || sku AS sku,
+    quantity,
+    serialized
+FROM
+    recursive_bom;

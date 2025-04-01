@@ -1,0 +1,105 @@
+// Source code is decompiled from a .class file using FernFlower decompiler.
+package com.bushnell;
+
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.Image;
+import java.awt.LayoutManager;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+
+public class MRPSystemUI extends JFrame {
+   private CardLayout cardLayout;
+   private JPanel cardPanel;
+
+   public MRPSystemUI() {
+      this.setTitle("MRP System");
+      this.setSize(1280, 720);
+      this.setDefaultCloseOperation(3);
+      this.setLocationRelativeTo((Component)null);
+      this.setLayout(new BorderLayout());
+      JPanel var1 = new JPanel();
+      var1.setBackground(Color.BLACK);
+      var1.setLayout((LayoutManager)null);
+      this.add(var1, "Center");
+      JLabel var2 = new JLabel();
+
+      try {
+         BufferedImage var3 = ImageIO.read(this.getClass().getClassLoader().getResource("VisualRoboticsLogo.png"));
+         Image var4 = var3.getScaledInstance(180, 51, 4);
+         var2.setIcon(new ImageIcon(var4));
+      } catch (IOException var13) {
+         var13.printStackTrace();
+      }
+
+      var2.setBounds(10, 10, 180, 51);
+      var1.add(var2);
+      JLabel var14 = new JLabel("MRP System");
+      var14.setForeground(Color.WHITE);
+      var14.setFont(new Font("Arial", 1, 20));
+      var14.setBounds(10, 70, 200, 30);
+      var1.add(var14);
+      String[] var15 = new String[]{"Update Stock", "Stock Report", "Bundle", "Demand Analysis"};
+      Color var5 = Color.decode("#6DC066");
+      int var6 = 110;
+      String[] var7 = var15;
+      int var8 = var15.length;
+
+      int var9;
+      String var10;
+      for(var9 = 0; var9 < var8; ++var9) {
+         var10 = var7[var9];
+         JButton var11 = new JButton(var10);
+         var11.setBackground(var5);
+         var11.setForeground(Color.WHITE);
+         var11.setFocusPainted(false);
+         var11.setFont(new Font("Arial", 0, 14));
+         var11.setBounds(10, var6, 160, 40);
+         var11.setActionCommand(var10);
+         var11.addActionListener((var1x) -> {
+            this.showCard(var1x.getActionCommand());
+         });
+         var1.add(var11);
+         var6 += 50;
+      }
+
+      this.cardLayout = new CardLayout();
+      this.cardPanel = new JPanel(this.cardLayout);
+      this.cardPanel.setBackground(Color.WHITE);
+      this.cardPanel.setBounds(200, 10, 1060, 660);
+      var1.add(this.cardPanel);
+      var7 = var15;
+      var8 = var15.length;
+
+      for(var9 = 0; var9 < var8; ++var9) {
+         var10 = var7[var9];
+         JPanel var16 = new JPanel();
+         var16.setBackground(Color.WHITE);
+         JLabel var12 = new JLabel(var10);
+         var12.setFont(new Font("Arial", 1, 24));
+         var16.add(var12);
+         this.cardPanel.add(var16, var10);
+      }
+
+   }
+
+   private void showCard(String var1) {
+      this.cardLayout.show(this.cardPanel, var1);
+   }
+
+   public static void main(String[] var0) {
+      SwingUtilities.invokeLater(() -> {
+         (new MRPSystemUI()).setVisible(true);
+      });
+   }
+}
