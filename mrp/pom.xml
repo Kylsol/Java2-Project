@@ -37,11 +37,18 @@
       <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
+
+    <!-- ✅ SQLite JDBC Driver -->
+    <dependency>
+      <groupId>org.xerial</groupId>
+      <artifactId>sqlite-jdbc</artifactId>
+      <version>3.36.0.3</version>
+    </dependency>
   </dependencies>
 
   <build>
     <plugins>
-      <!-- Exec plugin to run Swing app -->
+      <!-- ✅ Exec plugin to run Swing app -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
@@ -51,7 +58,6 @@
         </configuration>
       </plugin>
 
-      <!-- Existing plugins -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
@@ -81,7 +87,6 @@
           <release>8</release>
         </configuration>
       </plugin>
-
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -190,7 +195,6 @@
       </plugin>
     </plugins>
 
-    <!-- Resources block -->
     <resources>
       <resource>
         <directory>src/main/resources</directory>
