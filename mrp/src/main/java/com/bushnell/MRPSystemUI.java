@@ -5,6 +5,11 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Image;
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import javax.imageio.ImageIO;
@@ -14,6 +19,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import java.awt.MediaTracker;
 import java.net.URL;
 
 /**
@@ -63,6 +69,9 @@ public class MRPSystemUI extends JFrame {
     
 
     /**
+     * Constructs the main system UI.
+     * Initializes the JFrame, sets its properties, and adds components including 
+     * the logo, title, buttons, and content panels for navigation.
      * Constructs the main system UI.
      * Initializes the JFrame, sets its properties, and adds components including 
      * the logo, title, buttons, and content panels for navigation.
@@ -173,6 +182,9 @@ public class MRPSystemUI extends JFrame {
      * Switches the visible content panel inside the card panel.
      * @param name The identifier of the card to show.
      * This method updates the view within the cardPanel based on the button pressed.
+     * Switches the visible content panel inside the card panel.
+     * @param name The identifier of the card to show.
+     * This method updates the view within the cardPanel based on the button pressed.
      */
     private void showCard(String name) {
         if ("Stock Report".equals(name) && stockReportPanel != null) {
@@ -182,6 +194,8 @@ public class MRPSystemUI extends JFrame {
     }    
 
     /**
+     * Main method – the program's entry point.
+     * This method initializes the MRPSystemUI and sets it visible.
      * Main method – the program's entry point.
      * This method initializes the MRPSystemUI and sets it visible.
      */
