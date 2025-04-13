@@ -19,6 +19,6 @@ out/
 
 # === Logs ===
 *.log
-target/
-target/
-.DS_Store
+
+# === Exported Reports ===
+*.pdf
