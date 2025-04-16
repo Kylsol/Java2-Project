@@ -1,10 +1,6 @@
 package com.bushnell;
 
-import java.awt.BorderLayout;
-import java.awt.CardLayout;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Image;
+// Import necessary libraries for GUI and image handling
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -19,191 +15,154 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import java.awt.MediaTracker;
 import java.net.URL;
 
-/**
- * Main GUI class for the MRP (Material Requirements Planning) System.
- * This class is responsible for creating and displaying the main user interface window, 
- * adding components such as buttons, labels, and panels, and managing navigation between different panels.
- */
 public class MRPSystemUI extends JFrame {
+    // Constants for frame and component dimensions
+    private static final int FRAME_WIDTH = 1280;
+    private static final int FRAME_HEIGHT = 720;
+    private static final int LOGO_WIDTH = 180;
+    private static final int LOGO_HEIGHT = 51;
+    private static final int LOGO_X = 10;
+    private static final int LOGO_Y = 10;
+    private static final int TITLE_X = 10;
+    private static final int TITLE_Y = 70;
+    private static final int TITLE_WIDTH = 200;
+    private static final int TITLE_HEIGHT = 30;
+    private static final int BUTTON_START_Y = 110;
+    private static final int BUTTON_WIDTH = 160;
+    private static final int BUTTON_HEIGHT = 40;
+    private static final int BUTTON_SPACING = 50;
+    private static final int BUTTON_FONT_SIZE = 14;
+    private static final int TITLE_FONT_SIZE = 20;
+    private static final int CARD_FONT_SIZE = 24;
+    private static final int CONTENT_X = 200;
+    private static final int CONTENT_Y = 10;
+    private static final int CONTENT_WIDTH = 1060;
+    private static final int CONTENT_HEIGHT = 660;
 
-    // Constants for window size and positioning
-    private static final int FRAME_WIDTH = 1280;  // Width of the main window
-    private static final int FRAME_HEIGHT = 720;  // Height of the main window
+    // CardLayout is used for switching between different panels
+    private CardLayout cardLayout;
+    private JPanel cardPanel; // Panel that holds all feature panels
+    private StockReport stockReportPanel; // Reference to StockReport panel
+    private BundlePanel bundlePanel; // Reference to Bundle panel
 
-    // Constants for logo dimensions and position
-    private static final int LOGO_WIDTH = 180;  // Width of the logo
-    private static final int LOGO_HEIGHT = 51;  // Height of the logo
-    private static final int LOGO_X = 10;  // X-position of the logo on the window
-    private static final int LOGO_Y = 10;  // Y-position of the logo on the window
-
-    // Constants for title label dimensions and position
-    private static final int TITLE_X = 10;  // X-position of the title
-    private static final int TITLE_Y = 70;  // Y-position of the title
-    private static final int TITLE_WIDTH = 200;  // Width of the title label
-    private static final int TITLE_HEIGHT = 30;  // Height of the title label
-
-    // Constants for button dimensions, positioning, and font size
-    private static final int BUTTON_START_Y = 110;  // Starting Y-position for buttons
-    private static final int BUTTON_WIDTH = 160;  // Width of each button
-    private static final int BUTTON_HEIGHT = 40;  // Height of each button
-    private static final int BUTTON_SPACING = 50;  // Vertical spacing between buttons
-    private static final int BUTTON_FONT_SIZE = 14;  // Font size for buttons
-
-    // Constants for the title and card font sizes
-    private static final int TITLE_FONT_SIZE = 20;  // Font size for the main title
-    private static final int CARD_FONT_SIZE = 24;  // Font size for content cards
-
-    // Constants for content panel position and size
-    private static final int CONTENT_X = 200;  // X-position for the content panel
-    private static final int CONTENT_Y = 10;  // Y-position for the content panel
-    private static final int CONTENT_WIDTH = 1060;  // Width of the content panel
-    private static final int CONTENT_HEIGHT = 660;  // Height of the content panel
-
-    // Instance variables for CardLayout and the content panel
-    private CardLayout cardLayout;  // CardLayout object to manage panel switching
-    private JPanel cardPanel;  // JPanel to hold the content cards
-    private StockReport stockReportPanel;
-    
-
-    /**
-     * Constructs the main system UI.
-     * Initializes the JFrame, sets its properties, and adds components including 
-     * the logo, title, buttons, and content panels for navigation.
-     * Constructs the main system UI.
-     * Initializes the JFrame, sets its properties, and adds components including 
-     * the logo, title, buttons, and content panels for navigation.
-     */
     public MRPSystemUI() {
-        // Set the window properties: title, size, close operation, and location
+        // Configure the main JFrame
         setTitle("MRP System");
-        setSize(FRAME_WIDTH, FRAME_HEIGHT);  // Set the size of the main window
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);  // Close the application when the window is closed
-        setLocationRelativeTo(null);  // Center the window on the screen
-        setLayout(new BorderLayout());  // Set the layout of the main window to BorderLayout
+        setSize(FRAME_WIDTH, FRAME_HEIGHT);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null); // Center on screen
+        setLayout(new BorderLayout());
 
-        // Set custom icon for the application window
-        // Try to load the application icon from resources
+        // Try to set application icon from resources
         URL iconURL = getClass().getClassLoader().getResource("VisualRoboticsIcon.png");
         if (iconURL != null) {
-            System.out.println("Icon found: " + iconURL);  // Print the icon path to the console
-            setIconImage(new ImageIcon(iconURL).getImage());  // Set the icon for the window
+            setIconImage(new ImageIcon(iconURL).getImage());
         } else {
-            System.out.println("Icon not found!");  // Print an error if the icon is not found
+            System.out.println("Icon not found!");
         }
 
-        // Set up main panel to contain other components
+        // Create main panel and configure layout and background
         JPanel mainPanel = new JPanel();
-        mainPanel.setBackground(Color.BLACK);  // Set the background color of the panel
-        mainPanel.setLayout(null);  // Use absolute positioning for components in this panel
-        add(mainPanel, BorderLayout.CENTER);  // Add the panel to the center of the window
+        mainPanel.setBackground(Color.BLACK);
+        mainPanel.setLayout(null); // Absolute positioning
+        add(mainPanel, BorderLayout.CENTER);
 
-        // Add logo to the main panel
-        JLabel logoLabel = new JLabel();  // Create a label to display the logo
+        // Load and add the company logo image to the top left
+        JLabel logoLabel = new JLabel();
         try {
-            // Try to read the logo image from resources
             BufferedImage logoImage = ImageIO.read(getClass().getClassLoader().getResource("VisualRoboticsLogo.png"));
             if (logoImage != null) {
-                // Scale the logo to the specified dimensions
                 Image scaledLogo = logoImage.getScaledInstance(LOGO_WIDTH, LOGO_HEIGHT, Image.SCALE_SMOOTH);
-                logoLabel.setIcon(new ImageIcon(scaledLogo));  // Set the scaled logo as the label icon
-            } else {
-                System.err.println("Logo image not found in resources.");  // Print error if logo is not found
+                logoLabel.setIcon(new ImageIcon(scaledLogo));
             }
         } catch (IOException e) {
-            e.printStackTrace();  // Print any IO exceptions that occur while loading the image
+            e.printStackTrace();
         }
-
-        // Position the logo on the main panel
         logoLabel.setBounds(LOGO_X, LOGO_Y, LOGO_WIDTH, LOGO_HEIGHT);
-        mainPanel.add(logoLabel);  // Add the logo label to the main panel
+        mainPanel.add(logoLabel); // Add logo to panel
 
-        // Add the title label to the main panel
+        // Create and add the title label below the logo
         JLabel titleLabel = new JLabel("MRP System");
-        titleLabel.setForeground(Color.WHITE);  // Set the title text color to white
-        titleLabel.setFont(new Font("Arial", Font.BOLD, TITLE_FONT_SIZE));  // Set the font for the title
-        titleLabel.setBounds(TITLE_X, TITLE_Y, TITLE_WIDTH, TITLE_HEIGHT);  // Position the title label
-        mainPanel.add(titleLabel);  // Add the title label to the main panel
+        titleLabel.setForeground(Color.WHITE); // White text for contrast
+        titleLabel.setFont(new Font("Arial", Font.BOLD, TITLE_FONT_SIZE));
+        titleLabel.setBounds(TITLE_X, TITLE_Y, TITLE_WIDTH, TITLE_HEIGHT);
+        mainPanel.add(titleLabel);
 
-        // Array of button labels
+        // Define button labels for navigation
         String[] buttons = {"Update Stock", "Stock Report", "Bundle", "Demand Analysis"};
-        Color vrGreen = Color.decode("#6DC066");  // Define a custom green color for buttons
-        int yOffset = BUTTON_START_Y;  // Set the starting Y-position for the first button
+        Color vrGreen = Color.decode("#6DC066"); // Brand green color
+        int yOffset = BUTTON_START_Y; // Initial Y-position for the first button
 
-        // Add buttons to the main panel
+        // Create sidebar buttons and add them to the main panel
         for (String text : buttons) {
-            JButton btn = new JButton(text);  // Create a new button with the specified text
-            btn.setBackground(vrGreen);  // Set the background color of the button
-            btn.setForeground(Color.WHITE);  // Set the text color of the button to white
-            btn.setOpaque(true);  // Make the button opaque (solid color)
-            btn.setBorderPainted(false);  // Remove the button's border
-            btn.setFocusPainted(false);  // Remove the button's focus ring
-            btn.setFont(new Font("Arial", Font.BOLD, BUTTON_FONT_SIZE));  // Set the font for the button
-            btn.setBounds(LOGO_X, yOffset, BUTTON_WIDTH, BUTTON_HEIGHT);  // Position the button
-            btn.setActionCommand(text);  // Set the action command for the button (used for event handling)
-            btn.addActionListener(e -> showCard(e.getActionCommand()));  // Add an event listener for button clicks
-            mainPanel.add(btn);  // Add the button to the main panel
-            yOffset += BUTTON_SPACING;  // Increase the Y-position for the next button
+            JButton btn = new JButton(text);
+            btn.setBackground(vrGreen); // Set background color
+            btn.setForeground(Color.WHITE); // Set text color
+            btn.setOpaque(true); // Make background color visible
+            btn.setBorderPainted(false); // Remove button border
+            btn.setFocusPainted(false); // Remove focus border on click
+            btn.setFont(new Font("Arial", Font.BOLD, BUTTON_FONT_SIZE));
+            btn.setBounds(LOGO_X, yOffset, BUTTON_WIDTH, BUTTON_HEIGHT); // Set button position and size
+            btn.setActionCommand(text); // Use button text as action command
+            btn.addActionListener(e -> showCard(e.getActionCommand())); // Show associated card on click
+            mainPanel.add(btn); // Add button to panel
+            yOffset += BUTTON_SPACING; // Move down for next button
         }
 
-        // Create a card layout and panel to manage different content sections
-        cardLayout = new CardLayout();  // Create a new CardLayout object
-        cardPanel = new JPanel(cardLayout);  // Create a new JPanel with the CardLayout
-        cardPanel.setBackground(Color.WHITE);  // Set the background color of the card panel
-        cardPanel.setBounds(CONTENT_X, CONTENT_Y, CONTENT_WIDTH, CONTENT_HEIGHT);  // Set the size and position
-        mainPanel.add(cardPanel);  // Add the card panel to the main panel
+        // Initialize the card layout and card panel
+        cardLayout = new CardLayout();
+        cardPanel = new JPanel(cardLayout);
+        cardPanel.setBackground(Color.WHITE);
+        cardPanel.setBounds(CONTENT_X, CONTENT_Y, CONTENT_WIDTH, CONTENT_HEIGHT);
+        mainPanel.add(cardPanel); // Add card panel to main panel
 
-        // Add individual content panels to the card layout
+        // Add each feature panel to the card layout
         for (String name : buttons) {
             if ("Update Stock".equals(name)) {
-                // If the button is for updating stock, add the UpdateStockPanel to the card layout
-                    cardPanel.add(new UpdateStockPanel(), name);
-                } else if ("Stock Report".equals(name)) {
-                    stockReportPanel = new StockReport();
-                    cardPanel.add(stockReportPanel, name);
+                cardPanel.add(new UpdateStockPanel(), name);
+            } else if ("Stock Report".equals(name)) {
+                stockReportPanel = new StockReport();
+                cardPanel.add(stockReportPanel, name);
+            } else if ("Bundle".equals(name)) {
+                bundlePanel = new BundlePanel();
+                cardPanel.add(bundlePanel, name);
             } else {
-                // For other buttons, create a simple panel with the button's name as the label
+                // For placeholder panels like Demand Analysis
                 JPanel card = new JPanel();
-                card.setBackground(Color.WHITE);  // Set the background color of the panel
-                JLabel label = new JLabel(name);  // Create a label with the name of the button
-                label.setFont(new Font("Arial", Font.BOLD, CARD_FONT_SIZE));  // Set the font size for the label
-                card.add(label);  // Add the label to the panel
-                cardPanel.add(card, name);  // Add the panel to the card layout
+                card.setBackground(Color.WHITE);
+                JLabel label = new JLabel(name);
+                label.setFont(new Font("Arial", Font.BOLD, CARD_FONT_SIZE));
+                card.add(label);
+                cardPanel.add(card, name);
             }
         }
 
-        // Show the first card by default when the UI is initialized
+        // Show the first card by default (Update Stock)
         cardLayout.show(cardPanel, buttons[0]);
     }
 
-    /**
-     * Switches the visible content panel inside the card panel.
-     * @param name The identifier of the card to show.
-     * This method updates the view within the cardPanel based on the button pressed.
-     * Switches the visible content panel inside the card panel.
-     * @param name The identifier of the card to show.
-     * This method updates the view within the cardPanel based on the button pressed.
-     */
+    // Method to handle switching between feature panels
     private void showCard(String name) {
+        // If Stock Report is selected, refresh its content
         if ("Stock Report".equals(name) && stockReportPanel != null) {
-            stockReportPanel.updateReport();  // Refresh report
+            stockReportPanel.updateReport();
         }
+        // If Bundle is selected, reset the selection form
+        if ("Bundle".equals(name) && bundlePanel != null) {
+            bundlePanel.resetSelection();
+        }
+        // Show the selected panel using CardLayout
         cardLayout.show(cardPanel, name);
-    }    
+    }
 
-    /**
-     * Main method – the program's entry point.
-     * This method initializes the MRPSystemUI and sets it visible.
-     * Main method – the program's entry point.
-     * This method initializes the MRPSystemUI and sets it visible.
-     */
+    // Main method to launch the GUI application
     public static void main(String[] args) {
-        // Run the GUI on the Event Dispatch Thread to ensure thread safety
+        // Ensure UI runs on the Swing event-dispatching thread
         SwingUtilities.invokeLater(() -> {
-            MRPSystemUI ui = new MRPSystemUI();  // Create an instance of the MRPSystemUI
-            ui.setVisible(true);  // Set the UI to be visible
+            MRPSystemUI ui = new MRPSystemUI();
+            ui.setVisible(true); // Show the main window
         });
     }
 }
