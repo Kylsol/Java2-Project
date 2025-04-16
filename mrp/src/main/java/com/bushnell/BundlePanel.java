@@ -119,90 +119,156 @@ public class BundlePanel extends JPanel {
     }
 
     /**
-     * Called when a SKU is selected. Loads its description, stock,
-     * and component information from the database.
-     */
-    private void onSKUSelected(ActionEvent e) {
-        String selectedSKU = (String) skuComboBox.getSelectedItem();
-        if (selectedSKU == null) return;
+ * Triggered when a new SKU is selected from the dropdown.
+ * 
+ * This method:
+ * 1. Retrieves the selected SKU's description and stock.
+ * 2. Loads its associated child components from the BOM (Bill of Materials).
+ * 3. For each child SKU, fetches the description and current stock.
+ * 4. Populates the component table with this data.
+ * 5. Enables or disables the bundle button based on stock availability.
+ */
+private void onSKUSelected(ActionEvent e) {
+    String selectedSKU = (String) skuComboBox.getSelectedItem();
+    if (selectedSKU == null) return; // Exit if no SKU is selected
 
-        try (Connection conn = DriverManager.getConnection(DB_PATH)) {
-            // Get main part info
-            PreparedStatement partStmt = conn.prepareStatement("SELECT description, stock FROM part WHERE sku = ?");
-            partStmt.setString(1, selectedSKU);
-            ResultSet partRs = partStmt.executeQuery();
-            if (partRs.next()) {
-                descLabel.setText("Description: " + partRs.getString("description"));
-                stockLabel.setText("Stock: " + partRs.getInt("stock"));
-            }
+    try (Connection conn = DriverManager.getConnection(DB_PATH)) {
+        // === Step 1: Get main part info ===
+        // SQL: SELECT description, stock FROM part WHERE sku = ?
+        // Explanation:
+        // - Retrieves the description and stock for the selected parent SKU
+        PreparedStatement partStmt = conn.prepareStatement(
+            "SELECT description, stock FROM part WHERE sku = ?"
+        );
+        partStmt.setString(1, selectedSKU);
+        ResultSet partRs = partStmt.executeQuery();
 
-            // Clear previous table content
-            tableModel.setRowCount(0);
-
-            // Load components (children) from BOM
-            PreparedStatement bomStmt = conn.prepareStatement("SELECT sku, quantity FROM bom WHERE parent_sku = ?");
-            bomStmt.setString(1, selectedSKU);
-            ResultSet bomRs = bomStmt.executeQuery();
-
-            boolean canBundle = true; // Assume it's possible until proven otherwise
-
-            while (bomRs.next()) {
-                String childSKU = bomRs.getString("sku");
-                int qtyRequired = bomRs.getInt("quantity");
-
-                // Get child part stock and description
-                PreparedStatement childStmt = conn.prepareStatement("SELECT description, stock FROM part WHERE sku = ?");
-                childStmt.setString(1, childSKU);
-                ResultSet childRs = childStmt.executeQuery();
-                if (childRs.next()) {
-                    String desc = childRs.getString("description");
-                    int stock = childRs.getInt("stock");
-                    if (stock < qtyRequired) canBundle = false; // Not enough stock for this component
-                    tableModel.addRow(new Object[]{childSKU, desc, qtyRequired, stock});
-                }
-            }
-
-            updateBundleButtonState(canBundle); // Enable/disable with color change
-        } catch (SQLException ex) {
-            showError("Failed to load SKU details", ex);
+        // Display the description and stock in the UI if the SKU exists
+        if (partRs.next()) {
+            descLabel.setText("Description: " + partRs.getString("description"));
+            stockLabel.setText("Stock: " + partRs.getInt("stock"));
         }
+
+        // === Step 2: Clear previous component rows ===
+        tableModel.setRowCount(0); // Clears the table for fresh data
+
+        // === Step 3: Get child components from BOM ===
+        // SQL: SELECT sku, quantity FROM bom WHERE parent_sku = ?
+        // Explanation:
+        // - Retrieves all child SKUs and quantities needed to assemble the selected parent SKU
+        PreparedStatement bomStmt = conn.prepareStatement(
+            "SELECT sku, quantity FROM bom WHERE parent_sku = ?"
+        );
+        bomStmt.setString(1, selectedSKU);
+        ResultSet bomRs = bomStmt.executeQuery();
+
+        boolean canBundle = true; // Flag to determine if bundling is possible
+
+        // === Step 4: For each child, get description and stock ===
+        while (bomRs.next()) {
+            String childSKU = bomRs.getString("sku");        // SKU of component part
+            int qtyRequired = bomRs.getInt("quantity");      // Quantity needed for bundle
+
+            // SQL: SELECT description, stock FROM part WHERE sku = ?
+            // Explanation:
+            // - Retrieves the child part's description and stock from the parts table
+            PreparedStatement childStmt = conn.prepareStatement(
+                "SELECT description, stock FROM part WHERE sku = ?"
+            );
+            childStmt.setString(1, childSKU);
+            ResultSet childRs = childStmt.executeQuery();
+
+            if (childRs.next()) {
+                String desc = childRs.getString("description");
+                int stock = childRs.getInt("stock");
+
+                // Check if there's enough stock of this component for bundling
+                if (stock < qtyRequired) canBundle = false;
+
+                // Add a row to the table: SKU | Description | Quantity Needed | Current Stock
+                tableModel.addRow(new Object[]{childSKU, desc, qtyRequired, stock});
+            }
+        }
+
+        // === Step 5: Enable or disable bundle button ===
+        // If any child part doesn't have enough stock, disable the button
+        updateBundleButtonState(canBundle);
+        
+    } catch (SQLException ex) {
+        // Show a user-friendly error message if database query fails
+        showError("Failed to load SKU details", ex);
     }
+}
+
 
     /**
      * Performs the bundling operation: reduces child stock, increases parent stock.
      * Uses transactions and batch updates to ensure consistency.
      */
-    private void bundle() {
-        String parentSKU = (String) skuComboBox.getSelectedItem();
-        if (parentSKU == null) return;
+    /**
+ * Performs the bundling operation for a selected parent SKU.
+ * 
+ * This method:
+ * 1. Subtracts the required quantity of each component (child SKU) from inventory.
+ * 2. Increases the inventory of the parent SKU (the bundled product) by 1.
+ * 3. Executes all changes in a single database transaction to ensure data integrity.
+ */
+private void bundle() {
+    // Retrieve the selected parent SKU (the bundled product)
+    String parentSKU = (String) skuComboBox.getSelectedItem();
+    if (parentSKU == null) return; // Exit if no SKU is selected
 
-        try (Connection conn = DriverManager.getConnection(DB_PATH)) {
-            conn.setAutoCommit(false); // Start transaction
+    try (Connection conn = DriverManager.getConnection(DB_PATH)) {
+        // Start a transaction to ensure all-or-nothing update behavior
+        conn.setAutoCommit(false);
 
-            // Subtract stock from all child SKUs
-            PreparedStatement updateChild = conn.prepareStatement("UPDATE part SET stock = stock - ? WHERE sku = ?");
-            for (int i = 0; i < tableModel.getRowCount(); i++) {
-                String childSKU = (String) tableModel.getValueAt(i, 0);
-                int qty = (int) tableModel.getValueAt(i, 2);
-                updateChild.setInt(1, qty);
-                updateChild.setString(2, childSKU);
-                updateChild.addBatch(); // Batch update for performance
-            }
-            updateChild.executeBatch();
+        // Prepare a SQL statement to subtract stock from each component
+        // SQL: UPDATE part SET stock = stock - ? WHERE sku = ?
+        // Explanation:
+        // - "part" is the table that contains all SKUs
+        // - "stock = stock - ?" subtracts the required quantity from current stock
+        // - "WHERE sku = ?" ensures only the specific child SKU is updated
+        PreparedStatement updateChild = conn.prepareStatement(
+            "UPDATE part SET stock = stock - ? WHERE sku = ?"
+        );
 
-            // Add one to the parent SKU's stock
-            PreparedStatement updateParent = conn.prepareStatement("UPDATE part SET stock = stock + 1 WHERE sku = ?");
-            updateParent.setString(1, parentSKU);
-            updateParent.executeUpdate();
+        // Loop through the component list (from the table model) to get each child SKU and required quantity
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            String childSKU = (String) tableModel.getValueAt(i, 0); // Column 0: SKU of the child component
+            int qty = (int) tableModel.getValueAt(i, 2);            // Column 2: Quantity needed for the bundle
 
-            conn.commit(); // Commit all changes
-            JOptionPane.showMessageDialog(this, "Bundling successful!");
-
-            onSKUSelected(null); // Refresh data
-        } catch (SQLException ex) {
-            showError("Bundling failed", ex);
+            updateChild.setInt(1, qty);         // Set the quantity to subtract
+            updateChild.setString(2, childSKU); // Set the child SKU to update
+            updateChild.addBatch();             // Add to batch for efficient execution
         }
+        updateChild.executeBatch(); // Execute all updates in a single batch call
+
+        // Prepare a SQL statement to increase stock for the parent SKU
+        // SQL: UPDATE part SET stock = stock + 1 WHERE sku = ?
+        // Explanation:
+        // - This adds 1 to the stock of the bundled (parent) product
+        PreparedStatement updateParent = conn.prepareStatement(
+            "UPDATE part SET stock = stock + 1 WHERE sku = ?"
+        );
+        updateParent.setString(1, parentSKU); // Set the parent SKU to update
+        updateParent.executeUpdate();         // Apply the stock increment
+
+        // Commit the transaction to permanently save changes
+        conn.commit();
+
+        // Inform the user that bundling was successful
+        JOptionPane.showMessageDialog(this, "Bundling successful!");
+
+        // Refresh the UI to reflect the updated stock values
+        onSKUSelected(null);
+
+    } catch (SQLException ex) {
+        // If any SQL error occurs, rollback is automatic with try-with-resources,
+        // and we notify the user of the failure
+        showError("Bundling failed", ex);
     }
+}
+
 
     /**
      * Shows an error dialog and prints stack trace for debugging.
