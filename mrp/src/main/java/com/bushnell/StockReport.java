@@ -1,11 +1,50 @@
 package com.bushnell;
 
-import javax.swing.*;
-import javax.swing.table.*;
-import java.awt.*;
+//Updated list of imports, avoiding the usage of *
+import javax.swing.BorderFactory;
+import javax.swing.DefaultCellEditor;
+import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.*;
-import java.sql.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+
 
 public class StockReport extends JPanel {
 
@@ -126,7 +165,7 @@ public class StockReport extends JPanel {
             try {
                 job.print();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Print error: " + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "Print error: " + ex.getMessage(), "Print Error", JOptionPane.ERROR_MESSAGE, getVRIcon());
             }
         }
     }
@@ -189,11 +228,13 @@ public class StockReport extends JPanel {
             }
     
             document.close();
-            JOptionPane.showMessageDialog(this, "Report saved as:\n" + pdfFile.getAbsolutePath());
+JOptionPane.showMessageDialog(this, "PDF saved to:\n" + pdfFile.getAbsolutePath(), "Export Successful", JOptionPane.INFORMATION_MESSAGE, getVRIcon());
+
     
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Failed to save PDF: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Failed to save PDF: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE, getVRIcon());
+
         }
     }
     
@@ -221,7 +262,7 @@ public class StockReport extends JPanel {
     
             // === Begin PDF creation ===
             com.itextpdf.text.Document document = new com.itextpdf.text.Document();
-            com.itextpdf.text.pdf.PdfWriter writer = com.itextpdf.text.pdf.PdfWriter.getInstance(document, new java.io.FileOutputStream(pdfFile));
+            com.itextpdf.text.pdf.PdfWriter.getInstance(document, new java.io.FileOutputStream(pdfFile));
             document.open();
     
             com.itextpdf.text.Font titleFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 16, com.itextpdf.text.Font.BOLD);
@@ -274,17 +315,15 @@ public class StockReport extends JPanel {
                 document.add(pdfTable);
             }
     
+            // ✅ Close the document and show success message
             document.close();
-            JOptionPane.showMessageDialog(this, "PDF saved to:\n" + pdfFile.getAbsolutePath());
+            JOptionPane.showMessageDialog(this, "PDF saved to:\n" + pdfFile.getAbsolutePath(), "Export Successful", JOptionPane.INFORMATION_MESSAGE, getVRIcon());
     
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Failed to export PDF: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Failed to export PDF: " + e.getMessage(), "Export Error", JOptionPane.ERROR_MESSAGE, getVRIcon());
         }
-    }
-    
-    
-     
+    }     
 
     public void updateReport() {
         tableModel.setRowCount(0);
@@ -303,8 +342,13 @@ public class StockReport extends JPanel {
             }
     
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error loading stock report: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Error loading stock report: " + e.getMessage(), "Load Error", JOptionPane.ERROR_MESSAGE, getVRIcon());
+
         }
+    }
+
+    private ImageIcon getVRIcon() {
+        return new ImageIcon(getClass().getResource("/VisualRoboticsIcon.png"));
     }
     
 }
