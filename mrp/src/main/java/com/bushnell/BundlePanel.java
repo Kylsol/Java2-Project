@@ -201,11 +201,7 @@ private void onSKUSelected(ActionEvent e) {
 }
 
 
-    /**
-     * Performs the bundling operation: reduces child stock, increases parent stock.
-     * Uses transactions and batch updates to ensure consistency.
-     */
-    /**
+/**
  * Performs the bundling operation for a selected parent SKU.
  * 
  * This method:
@@ -256,8 +252,15 @@ private void bundle() {
         // Commit the transaction to permanently save changes
         conn.commit();
 
-        // Inform the user that bundling was successful
-        JOptionPane.showMessageDialog(this, "Bundling successful!");
+        // Inform the user that bundling was successful using a custom icon
+        ImageIcon icon = new ImageIcon(getClass().getResource("/VisualRoboticsIcon.png"));
+        JOptionPane.showMessageDialog(
+            this,
+            "Bundling successful!",
+            "Message",
+            JOptionPane.INFORMATION_MESSAGE,
+            icon
+        );
 
         // Refresh the UI to reflect the updated stock values
         onSKUSelected(null);
@@ -268,6 +271,7 @@ private void bundle() {
         showError("Bundling failed", ex);
     }
 }
+
 
 
     /**

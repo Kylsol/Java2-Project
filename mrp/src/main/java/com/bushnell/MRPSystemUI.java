@@ -62,6 +62,7 @@ public class MRPSystemUI extends JFrame {
         } else {
             System.out.println("Icon not found!");
         }
+        
 
         // Create main panel and configure layout and background
         JPanel mainPanel = new JPanel();

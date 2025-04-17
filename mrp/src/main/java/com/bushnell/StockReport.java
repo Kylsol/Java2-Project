@@ -5,6 +5,7 @@ import javax.swing.BorderFactory;
 import javax.swing.DefaultCellEditor;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
+import javax.swing.ImageIcon;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -164,7 +165,7 @@ public class StockReport extends JPanel {
             try {
                 job.print();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Print error: " + ex.getMessage());
+                JOptionPane.showMessageDialog(this, "Print error: " + ex.getMessage(), "Print Error", JOptionPane.ERROR_MESSAGE, getVRIcon());
             }
         }
     }
@@ -227,11 +228,13 @@ public class StockReport extends JPanel {
             }
     
             document.close();
-            JOptionPane.showMessageDialog(this, "Report saved as:\n" + pdfFile.getAbsolutePath());
+JOptionPane.showMessageDialog(this, "PDF saved to:\n" + pdfFile.getAbsolutePath(), "Export Successful", JOptionPane.INFORMATION_MESSAGE, getVRIcon());
+
     
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Failed to save PDF: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Failed to save PDF: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE, getVRIcon());
+
         }
     }
     
@@ -259,7 +262,7 @@ public class StockReport extends JPanel {
     
             // === Begin PDF creation ===
             com.itextpdf.text.Document document = new com.itextpdf.text.Document();
-            com.itextpdf.text.pdf.PdfWriter writer = com.itextpdf.text.pdf.PdfWriter.getInstance(document, new java.io.FileOutputStream(pdfFile));
+            com.itextpdf.text.pdf.PdfWriter.getInstance(document, new java.io.FileOutputStream(pdfFile));
             document.open();
     
             com.itextpdf.text.Font titleFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 16, com.itextpdf.text.Font.BOLD);
@@ -312,17 +315,15 @@ public class StockReport extends JPanel {
                 document.add(pdfTable);
             }
     
+            // ✅ Close the document and show success message
             document.close();
-            JOptionPane.showMessageDialog(this, "PDF saved to:\n" + pdfFile.getAbsolutePath());
+            JOptionPane.showMessageDialog(this, "PDF saved to:\n" + pdfFile.getAbsolutePath(), "Export Successful", JOptionPane.INFORMATION_MESSAGE, getVRIcon());
     
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Failed to export PDF: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Failed to export PDF: " + e.getMessage(), "Export Error", JOptionPane.ERROR_MESSAGE, getVRIcon());
         }
-    }
-    
-    
-     
+    }     
 
     public void updateReport() {
         tableModel.setRowCount(0);
@@ -341,8 +342,13 @@ public class StockReport extends JPanel {
             }
     
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this, "Error loading stock report: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Error loading stock report: " + e.getMessage(), "Load Error", JOptionPane.ERROR_MESSAGE, getVRIcon());
+
         }
+    }
+
+    private ImageIcon getVRIcon() {
+        return new ImageIcon(getClass().getResource("/VisualRoboticsIcon.png"));
     }
     
 }
