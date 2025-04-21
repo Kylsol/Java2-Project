@@ -116,51 +116,42 @@ public class UpdateStockPanel extends JPanel {
         loadSKUs();  // Load SKU data into the combo box when the panel is initialized
     }
 
-    /**
-     * Loads the available SKUs from the database into the combo box.
-     * Fetches the SKU values from the 'part' table and adds them to the combo box.
-     */
-    private void loadSKUs() {
-        try (Connection conn = DriverManager.getConnection(DB_PATH);  // Establish a connection to the database
-             Statement stmt = conn.createStatement();  // Create a statement for SQL queries
-             ResultSet rs = stmt.executeQuery("SELECT sku FROM part")) {  // Execute a query to get SKUs
+    private ImageIcon getVRIcon() {
+        return new ImageIcon(getClass().getResource("/VisualRoboticsIcon.png"));
+    }
 
-            // Populate combo box with SKUs
-            while (rs.next()) {  // Iterate over the result set
-                skuComboBox.addItem(rs.getString("sku"));  // Add each SKU to the combo box
+    private void loadSKUs() {
+        try (Connection conn = DriverManager.getConnection(DB_PATH);
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT sku FROM part")) {
+
+            while (rs.next()) {
+                skuComboBox.addItem(rs.getString("sku"));
             }
         } catch (SQLException e) {
-            e.printStackTrace();  // Print any SQL errors to the console
-            JOptionPane.showMessageDialog(this, "Error loading SKUs: " + e.getMessage());  // Show an error message
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading SKUs: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE, getVRIcon());
         }
     }
 
-    /**
-     * Handles the SKU selection event.
-     * When the user selects an SKU from the combo box, the details of the SKU 
-     * (description, price, stock) are loaded into their respective fields and the table is updated.
-     */
     private void onSKUSelected(ActionEvent e) {
-        String selectedSKU = (String) skuComboBox.getSelectedItem();  // Get the selected SKU from the combo box
+        String selectedSKU = (String) skuComboBox.getSelectedItem();
         if (selectedSKU == null) {
-            return;  // Exit if no SKU is selected
+            return;
         }
 
-        // Query the database to fetch the details of the selected SKU
         try (Connection conn = DriverManager.getConnection(DB_PATH);
-             PreparedStatement stmt = conn.prepareStatement(
-                     "SELECT description, price, stock FROM part WHERE sku = ?")) {  // Prepare a statement
-            stmt.setString(1, selectedSKU);  // Set the SKU parameter in the query
-            ResultSet rs = stmt.executeQuery();  // Execute the query
+             PreparedStatement stmt = conn.prepareStatement("SELECT description, price, stock FROM part WHERE sku = ?")) {
 
-            if (rs.next()) {  // If a result is found for the selected SKU
-                // Populate the fields with the selected SKU's details
+            stmt.setString(1, selectedSKU);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
                 descriptionField.setText(rs.getString("description"));
                 priceField.setText(String.format("%." + DECIMAL_PLACES + "f", rs.getDouble("price")));
                 stockField.setText(String.valueOf(rs.getInt("stock")));
 
-                // Update the table with the SKU data
-                tableModel.setRowCount(0);  // Clear previous data from the table
+                tableModel.setRowCount(0);
                 tableModel.addRow(new Object[]{
                         selectedSKU,
                         rs.getString("description"),
@@ -169,78 +160,65 @@ public class UpdateStockPanel extends JPanel {
                 });
             }
         } catch (SQLException ex) {
-            ex.printStackTrace();  // Print any SQL errors to the console
-            JOptionPane.showMessageDialog(this, "Error loading SKU data: " + ex.getMessage());  // Show an error message
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error loading SKU data: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE, getVRIcon());
         }
     }
 
-    /**
-     * Handles the click event for the update button.
-     * When the user clicks 'Update Record', the system confirms the update 
-     * and then updates the price and stock for the selected SKU in the database.
-     */
     private void onUpdateClicked(ActionEvent e) {
-        String selectedSKU = (String) skuComboBox.getSelectedItem();  // Get the selected SKU
+        String selectedSKU = (String) skuComboBox.getSelectedItem();
         if (selectedSKU == null) {
-            return;  // Exit if no SKU is selected
+            return;
         }
 
-        // Confirmation dialog before updating the record
-        int response = JOptionPane.showConfirmDialog(this, "Are you sure you want to update the record?", "Confirm Update", JOptionPane.YES_NO_OPTION);
+        int response = JOptionPane.showConfirmDialog(this, "Are you sure you want to update the record?", "Confirm Update", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, getVRIcon());
 
         if (response == JOptionPane.YES_OPTION) {
             try {
-                // Parse the new price and stock values from the text fields
                 double newPrice = Double.parseDouble(priceField.getText());
                 int newStock = Integer.parseInt(stockField.getText());
 
-                // Prepare and execute the SQL update query
                 try (Connection conn = DriverManager.getConnection(DB_PATH);
-                     PreparedStatement stmt = conn.prepareStatement(
-                             "UPDATE part SET price = ?, stock = ? WHERE sku = ?")) {
+                     PreparedStatement stmt = conn.prepareStatement("UPDATE part SET price = ?, stock = ? WHERE sku = ?")) {
 
-                    stmt.setDouble(1, newPrice);  // Set the new price
-                    stmt.setInt(2, newStock);  // Set the new stock quantity
-                    stmt.setString(3, selectedSKU);  // Set the SKU to update
+                    stmt.setDouble(1, newPrice);
+                    stmt.setInt(2, newStock);
+                    stmt.setString(3, selectedSKU);
 
-                    int rows = stmt.executeUpdate();  // Execute the update query
+                    int rows = stmt.executeUpdate();
                     if (rows > 0) {
-                        JOptionPane.showMessageDialog(this, "Stock updated successfully.");  // Show success message
-                        refreshTable(selectedSKU);  // Refresh the table after the update
+                        JOptionPane.showMessageDialog(this, "Stock updated successfully.", "Update Successful", JOptionPane.INFORMATION_MESSAGE, getVRIcon());
+                        refreshTable(selectedSKU);
                     } else {
-                        JOptionPane.showMessageDialog(this, "No changes made.");  // Show message if no rows were updated
+                        JOptionPane.showMessageDialog(this, "No changes made.", "No Update", JOptionPane.WARNING_MESSAGE, getVRIcon());
                     }
                 }
             } catch (NumberFormatException nfe) {
-                JOptionPane.showMessageDialog(this, "Invalid number format.");  // Show error for invalid input
+                JOptionPane.showMessageDialog(this, "Invalid number format.", "Invalid Input", JOptionPane.ERROR_MESSAGE, getVRIcon());
             } catch (SQLException ex) {
-                ex.printStackTrace();  // Print any SQL errors to the console
-                JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage());  // Show an error message
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE, getVRIcon());
             }
         }
     }
 
-    /**
-     * Refreshes the table with updated information for the selected SKU.
-     * Fetches the latest data for the SKU and updates the table model.
-     */
     private void refreshTable(String selectedSKU) {
         try (Connection conn = DriverManager.getConnection(DB_PATH);
-             PreparedStatement stmt = conn.prepareStatement(
-                     "SELECT * FROM part WHERE sku = ?")) {  // Prepare a statement to fetch the SKU data
-            stmt.setString(1, selectedSKU);  // Set the SKU parameter in the query
-            ResultSet rs = stmt.executeQuery();  // Execute the query
+             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM part WHERE sku = ?")) {
 
-            if (rs.next()) {  // If a result is found
-                // Update the table model with the new data
-                tableModel.setValueAt(rs.getString("sku"), 0, 0);  // Update SKU in the table
-                tableModel.setValueAt(rs.getString("description"), 0, 1);  // Update description
-                tableModel.setValueAt(rs.getDouble("price"), 0, 2);  // Update price
-                tableModel.setValueAt(rs.getInt("stock"), 0, 3);  // Update stock
+            stmt.setString(1, selectedSKU);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                tableModel.setValueAt(rs.getString("sku"), 0, 0);
+                tableModel.setValueAt(rs.getString("description"), 0, 1);
+                tableModel.setValueAt(rs.getDouble("price"), 0, 2);
+                tableModel.setValueAt(rs.getInt("stock"), 0, 3);
             }
         } catch (SQLException ex) {
-            ex.printStackTrace();  // Print any SQL errors to the console
-            JOptionPane.showMessageDialog(this, "Error refreshing the table: " + ex.getMessage());  // Show an error message
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error refreshing the table: " + ex.getMessage(), "Refresh Error", JOptionPane.ERROR_MESSAGE, getVRIcon());
         }
     }
 }
+
