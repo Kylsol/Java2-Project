@@ -143,20 +143,51 @@ public class DemandAnalysis extends JPanel {
         tableModel.setRowCount(0);
         String sku = (String) skuComboBox.getSelectedItem();
         int quantity = (Integer) spinner.getValue();
-
-        Map<String, Integer> needed = new HashMap<>();
-        getRawComponents(sku, quantity, needed);
-
+    
         try (Connection conn = DriverManager.getConnection(DB_PATH)) {
+            // Step 1: Check stock of the selected SKU
+            PreparedStatement stmt = conn.prepareStatement("SELECT stock FROM part WHERE sku = ?");
+            stmt.setString(1, sku);
+            ResultSet rs = stmt.executeQuery();
+    
+            int availableStock = 0;
+            if (rs.next()) {
+                availableStock = rs.getInt("stock");
+            }
+    
+            // Step 2: Determine missing quantity
+            int missingQty = quantity - availableStock;
+    
+            Map<String, Integer> needed = new HashMap<>();
+    
+            if (missingQty > 0) {
+                // Step 3: Only decompose the missing quantity
+                getRawComponents(sku, missingQty, needed);
+            }
+    
+            // Step 4: Add the selected SKU itself (already available)
+            if (availableStock >= quantity) {
+                // Enough stock, no raw materials needed
+                tableModel.addRow(new Object[]{sku, 0, availableStock, descLabel.getText()});
+            } else {
+                // Partially available
+                if (availableStock > 0) {
+                    tableModel.addRow(new Object[]{sku, 0, availableStock, descLabel.getText()});
+                } else {
+                    tableModel.addRow(new Object[]{sku, quantity, availableStock, descLabel.getText()});
+                }
+            }
+    
+            // Step 5: Load descriptions and stock for needed raw components
             for (String rawSku : needed.keySet()) {
-                PreparedStatement stmt = conn.prepareStatement("SELECT description, stock FROM part WHERE sku = ?");
-                stmt.setString(1, rawSku);
-                ResultSet rs = stmt.executeQuery();
+                PreparedStatement descStmt = conn.prepareStatement("SELECT description, stock FROM part WHERE sku = ?");
+                descStmt.setString(1, rawSku);
+                ResultSet descRs = descStmt.executeQuery();
                 String desc = "";
                 int stock = 0;
-                if (rs.next()) {
-                    desc = rs.getString("description");
-                    stock = rs.getInt("stock");
+                if (descRs.next()) {
+                    desc = descRs.getString("description");
+                    stock = descRs.getInt("stock");
                 }
                 tableModel.addRow(new Object[]{rawSku, needed.get(rawSku), stock, desc});
             }
@@ -164,31 +195,62 @@ public class DemandAnalysis extends JPanel {
             showError("Failed to load descriptions", e);
         }
     }
+    
 
     private void getRawComponents(String sku, int qty, Map<String, Integer> result) {
+        if (qty <= 0) return; // No need if nothing missing
+    
         try (Connection conn = DriverManager.getConnection(DB_PATH)) {
-            PreparedStatement check = conn.prepareStatement("SELECT COUNT(*) FROM bom WHERE parent_sku = ?");
+            // Step 1: Check if this SKU is raw (no BOM)
+            PreparedStatement check = conn.prepareStatement(
+                "SELECT COUNT(*) FROM bom WHERE parent_sku = ?"
+            );
             check.setString(1, sku);
-            ResultSet rs = check.executeQuery();
-            boolean isRaw = rs.next() && rs.getInt(1) == 0;
-
+            ResultSet rsCheck = check.executeQuery();
+            boolean isRaw = rsCheck.next() && rsCheck.getInt(1) == 0;
+    
             if (isRaw) {
+                // Raw part → Add quantity needed
                 result.put(sku, result.getOrDefault(sku, 0) + qty);
                 return;
             }
-
-            PreparedStatement bomStmt = conn.prepareStatement("SELECT sku, quantity FROM bom WHERE parent_sku = ?");
+    
+            // Step 2: See if we already have stock of this part
+            PreparedStatement stockStmt = conn.prepareStatement(
+                "SELECT stock FROM part WHERE sku = ?"
+            );
+            stockStmt.setString(1, sku);
+            ResultSet rsStock = stockStmt.executeQuery();
+            int stock = 0;
+            if (rsStock.next()) {
+                stock = rsStock.getInt("stock");
+            }
+    
+            if (stock >= qty) {
+                // Stock is enough, no further decomposition needed
+                return;
+            } else {
+                // Partially available, reduce needed qty
+                qty = qty - stock;
+            }
+    
+            // Step 3: Decompose only missing quantity
+            PreparedStatement bomStmt = conn.prepareStatement(
+                "SELECT sku, quantity FROM bom WHERE parent_sku = ?"
+            );
             bomStmt.setString(1, sku);
-            ResultSet bomRs = bomStmt.executeQuery();
-            while (bomRs.next()) {
-                String childSku = bomRs.getString("sku");
-                int childQty = bomRs.getInt("quantity");
+            ResultSet rsBOM = bomStmt.executeQuery();
+    
+            while (rsBOM.next()) {
+                String childSku = rsBOM.getString("sku");
+                int childQty = rsBOM.getInt("quantity");
                 getRawComponents(childSku, qty * childQty, result);
             }
         } catch (SQLException e) {
             showError("Error while calculating BOM", e);
         }
     }
+    
 
     private void exportPDF() {
         try {
