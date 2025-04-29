@@ -6,16 +6,20 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.FileOutputStream;
-import java.sql.*;
+import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Chunk;
 import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.PdfPTable;
-import javax.swing.*;
-import javax.swing.text.NumberFormatter;
-import javax.swing.text.DefaultFormatterFactory;
 
 public class DemandAnalysis extends JPanel {
     private JComboBox<String> skuComboBox;
@@ -29,37 +33,25 @@ public class DemandAnalysis extends JPanel {
         setLayout(new BorderLayout(10, 10));
 
         JLabel title = new JLabel("Demand Analysis", SwingConstants.CENTER);
-        title.setFont(new java.awt.Font("Arial", Font.BOLD, 20));
+        title.setFont(new Font("Arial", Font.BOLD, 20));
         add(title, BorderLayout.NORTH);
 
         JPanel inputPanel = new JPanel();
         inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
         skuComboBox = new JComboBox<>();
-        skuComboBox.setSelectedItem(null);
         descLabel = new JLabel();
         spinner = new JSpinner(new SpinnerNumberModel(1, 1, 9999, 1));
-        spinner.addChangeListener(e -> {
-            if (skuComboBox.getSelectedItem() != null && spinner.getValue() != null) {
-                calculateNeeds();
-            }
-        });
-        spinner.setPreferredSize(new Dimension(50, 20));
-        JFormattedTextField spinnerTextField = ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField();
-        spinnerTextField.setColumns(2);
-        spinnerTextField.setHorizontalAlignment(JTextField.CENTER);
-        DefaultFormatterFactory factory = (DefaultFormatterFactory) spinnerTextField.getFormatterFactory();
-        NumberFormatter formatter = (NumberFormatter) factory.getDefaultFormatter();
-        formatter.setAllowsInvalid(false);
-        spinner.setPreferredSize(new Dimension(60, 24));
 
         JPanel skuRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
         skuRow.add(new JLabel("SKU:"));
         skuRow.add(skuComboBox);
         inputPanel.add(skuRow);
+
         JPanel descRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
         descRow.add(new JLabel("Description:"));
         descRow.add(descLabel);
         inputPanel.add(descRow);
+
         JPanel qtyRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
         qtyRow.add(new JLabel("Desired Quantity:"));
         qtyRow.add(spinner);
@@ -76,7 +68,7 @@ public class DemandAnalysis extends JPanel {
         resultTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                           boolean hasFocus, int row, int column) {
+                                                            boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 if (column == 1 || column == 2) {
                     try {
@@ -98,25 +90,29 @@ public class DemandAnalysis extends JPanel {
         });
         add(new JScrollPane(resultTable), BorderLayout.CENTER);
 
-        loadSubSKUs();
-        skuComboBox.addActionListener(e -> {
-            if (skuComboBox.getSelectedItem() != null && spinner.getValue() != null) {
-                onSKUSelected(e);
-                calculateNeeds();
-            }
-        });
-
         JButton exportBtn = new JButton("Export PDF");
         exportBtn.addActionListener(e -> exportPDF());
         JPanel btnPanel = new JPanel();
-                btnPanel.add(exportBtn);
+        btnPanel.add(exportBtn);
         add(btnPanel, BorderLayout.SOUTH);
+
+        loadSubSKUs();
+        skuComboBox.addActionListener(e -> {
+            spinner.setValue(1);
+            runAnalysis();
+        });
+        spinner.addChangeListener(e -> runAnalysis());
+    }
+
+    private void runAnalysis() {
+        if (skuComboBox.getSelectedItem() == null || spinner.getValue() == null) return;
+        calculateNeeds();
     }
 
     private void loadSubSKUs() {
         try (Connection conn = DriverManager.getConnection(DB_PATH);
-             PreparedStatement stmt = conn.prepareStatement("SELECT sku FROM part WHERE sku LIKE 'SUB-%'");
-             ResultSet rs = stmt.executeQuery()) {
+             PreparedStatement stmt = conn.prepareStatement("SELECT sku FROM part WHERE sku LIKE 'SUB-%'")) {
+            ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 skuComboBox.addItem(rs.getString("sku"));
             }
@@ -125,143 +121,97 @@ public class DemandAnalysis extends JPanel {
         }
     }
 
-    private void onSKUSelected(ActionEvent e) {
-        String sku = (String) skuComboBox.getSelectedItem();
-        if (sku == null) return;
-
-        try (Connection conn = DriverManager.getConnection(DB_PATH);
-             PreparedStatement stmt = conn.prepareStatement("SELECT description FROM part WHERE sku = ?")) {
-            stmt.setString(1, sku);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) descLabel.setText(rs.getString("description"));
-        } catch (SQLException ex) {
-            showError("Failed to load description", ex);
-        }
-    }
-
     private void calculateNeeds() {
         tableModel.setRowCount(0);
         String sku = (String) skuComboBox.getSelectedItem();
         int quantity = (Integer) spinner.getValue();
-    
+
         try (Connection conn = DriverManager.getConnection(DB_PATH)) {
-            // Step 1: Check stock of the selected SKU
-            PreparedStatement stmt = conn.prepareStatement("SELECT stock FROM part WHERE sku = ?");
+            PreparedStatement stmt = conn.prepareStatement("SELECT description, stock FROM part WHERE sku = ?");
             stmt.setString(1, sku);
             ResultSet rs = stmt.executeQuery();
-    
             int availableStock = 0;
+            String desc = "";
             if (rs.next()) {
+                desc = rs.getString("description");
                 availableStock = rs.getInt("stock");
             }
-    
-            // Step 2: Determine missing quantity
-            int missingQty = quantity - availableStock;
-    
-            Map<String, Integer> needed = new HashMap<>();
-    
-            if (missingQty > 0) {
-                // Step 3: Only decompose the missing quantity
-                getRawComponents(sku, missingQty, needed);
-            }
-    
-            // Step 4: Add the selected SKU itself (already available)
-            if (availableStock >= quantity) {
-                // Enough stock, no raw materials needed
-                tableModel.addRow(new Object[]{sku, 0, availableStock, descLabel.getText()});
-            } else {
-                // Partially available
-                if (availableStock > 0) {
-                    tableModel.addRow(new Object[]{sku, 0, availableStock, descLabel.getText()});
-                } else {
-                    tableModel.addRow(new Object[]{sku, quantity, availableStock, descLabel.getText()});
-                }
-            }
-    
-            // Step 5: Load descriptions and stock for needed raw components
-            for (String rawSku : needed.keySet()) {
-                PreparedStatement descStmt = conn.prepareStatement("SELECT description, stock FROM part WHERE sku = ?");
-                descStmt.setString(1, rawSku);
-                ResultSet descRs = descStmt.executeQuery();
-                String desc = "";
-                int stock = 0;
-                if (descRs.next()) {
-                    desc = descRs.getString("description");
-                    stock = descRs.getInt("stock");
-                }
-                tableModel.addRow(new Object[]{rawSku, needed.get(rawSku), stock, desc});
-            }
-        } catch (SQLException e) {
-            showError("Failed to load descriptions", e);
-        }
-    }
-    
+            descLabel.setText(desc);
 
-    private void getRawComponents(String sku, int qty, Map<String, Integer> result) {
-        if (qty <= 0) return; // No need if nothing missing
-    
-        try (Connection conn = DriverManager.getConnection(DB_PATH)) {
-            // Step 1: Check if this SKU is raw (no BOM)
-            PreparedStatement check = conn.prepareStatement(
-                "SELECT COUNT(*) FROM bom WHERE parent_sku = ?"
-            );
-            check.setString(1, sku);
-            ResultSet rsCheck = check.executeQuery();
-            boolean isRaw = rsCheck.next() && rsCheck.getInt(1) == 0;
-    
-            if (isRaw) {
-                // Raw part → Add quantity needed
-                result.put(sku, result.getOrDefault(sku, 0) + qty);
-                return;
+            int missingQty = quantity - availableStock;
+
+            Map<String, Integer> needed = new HashMap<>();
+            if (missingQty > 0) {
+                getRawComponents(conn, sku, missingQty, needed);
             }
-    
-            // Step 2: See if we already have stock of this part
-            PreparedStatement stockStmt = conn.prepareStatement(
-                "SELECT stock FROM part WHERE sku = ?"
-            );
-            stockStmt.setString(1, sku);
-            ResultSet rsStock = stockStmt.executeQuery();
-            int stock = 0;
-            if (rsStock.next()) {
-                stock = rsStock.getInt("stock");
+
+            tableModel.addRow(new Object[]{sku, Math.max(missingQty, 0), availableStock, desc});
+
+            for (String rawSku : needed.keySet()) {
+                PreparedStatement rawStmt = conn.prepareStatement("SELECT description, stock FROM part WHERE sku = ?");
+                rawStmt.setString(1, rawSku);
+                ResultSet rawRs = rawStmt.executeQuery();
+                String rawDesc = "";
+                int rawStock = 0;
+                if (rawRs.next()) {
+                    rawDesc = rawRs.getString("description");
+                    rawStock = rawRs.getInt("stock");
+                }
+                tableModel.addRow(new Object[]{rawSku, needed.get(rawSku), rawStock, rawDesc});
             }
-    
-            if (stock >= qty) {
-                // Stock is enough, no further decomposition needed
-                return;
-            } else {
-                // Partially available, reduce needed qty
-                qty = qty - stock;
-            }
-    
-            // Step 3: Decompose only missing quantity
-            PreparedStatement bomStmt = conn.prepareStatement(
-                "SELECT sku, quantity FROM bom WHERE parent_sku = ?"
-            );
-            bomStmt.setString(1, sku);
-            ResultSet rsBOM = bomStmt.executeQuery();
-    
-            while (rsBOM.next()) {
-                String childSku = rsBOM.getString("sku");
-                int childQty = rsBOM.getInt("quantity");
-                getRawComponents(childSku, qty * childQty, result);
-            }
+
         } catch (SQLException e) {
-            showError("Error while calculating BOM", e);
+            showError("Failed to calculate needs", e);
         }
     }
-    
+
+    private void getRawComponents(Connection conn, String sku, int qty, Map<String, Integer> result) throws SQLException {
+        if (qty <= 0) return;
+
+        PreparedStatement checkBOM = conn.prepareStatement("SELECT COUNT(*) FROM bom WHERE parent_sku = ?");
+        checkBOM.setString(1, sku);
+        ResultSet bomCount = checkBOM.executeQuery();
+        boolean isRaw = bomCount.next() && bomCount.getInt(1) == 0;
+
+        if (isRaw) {
+            result.put(sku, result.getOrDefault(sku, 0) + qty);
+            return;
+        }
+
+        PreparedStatement stockStmt = conn.prepareStatement("SELECT stock FROM part WHERE sku = ?");
+        stockStmt.setString(1, sku);
+        ResultSet stockRs = stockStmt.executeQuery();
+        int available = 0;
+        if (stockRs.next()) available = stockRs.getInt("stock");
+
+        if (available >= qty) return;
+
+        int needToBuild = qty - available;
+
+        PreparedStatement bomStmt = conn.prepareStatement("SELECT sku, quantity FROM bom WHERE parent_sku = ?");
+        bomStmt.setString(1, sku);
+        ResultSet bomRs = bomStmt.executeQuery();
+
+        while (bomRs.next()) {
+            String childSku = bomRs.getString("sku");
+            int childQty = bomRs.getInt("quantity");
+            getRawComponents(conn, childSku, needToBuild * childQty, result);
+        }
+    }
 
     private void exportPDF() {
         try {
-            String timestamp = new SimpleDateFormat("yyyy.MM.dd-HH.mm").format(new java.util.Date());
-            String sku = (String) skuComboBox.getSelectedItem();
-            int qty = (Integer) spinner.getValue();
+            String timestamp = new SimpleDateFormat("yyyy.MM.dd-HH.mm").format(new Date());
             String filename = "DemandAnalysis-" + timestamp + ".pdf";
+            File file = new File(filename);
+            String fullPath = file.getAbsolutePath();
 
             Document doc = new Document();
-            PdfWriter.getInstance(doc, new FileOutputStream(filename));
+            PdfWriter.getInstance(doc, new FileOutputStream(file));
             doc.open();
+
+            String sku = (String) skuComboBox.getSelectedItem();
+            int qty = (Integer) spinner.getValue();
 
             com.itextpdf.text.Font headerFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 14, com.itextpdf.text.Font.BOLD);
             com.itextpdf.text.Font bodyFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 12);
@@ -287,7 +237,12 @@ public class DemandAnalysis extends JPanel {
             doc.add(table);
             doc.close();
 
-            JOptionPane.showMessageDialog(this, "PDF saved: " + filename);
+            JOptionPane.showMessageDialog(this, "PDF saved to:\n" + fullPath);
+            System.out.println("PDF actually saved at: " + fullPath);
+
+            if (Desktop.isDesktopSupported() && file.getParentFile() != null) {
+                Desktop.getDesktop().open(file.getParentFile());
+            }
 
         } catch (Exception e) {
             showError("Failed to export PDF", e);
